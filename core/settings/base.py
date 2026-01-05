@@ -10,10 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+
+# A helper function to get required environment variables
+def get_env_var(ev: str):
+    value = os.environ.get(ev)
+    if value is None:
+        raise RuntimeError(f"Required environment variable '{ev}' not set!")
+    return value
 
 
 # Application definition
