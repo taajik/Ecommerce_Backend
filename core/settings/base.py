@@ -18,8 +18,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # A helper function to get required environment variables
-def get_env_var(ev: str):
-    value = os.environ.get(ev)
+def get_env_var(ev, default=None):
+    value = os.environ.get(ev, default)
     if value is None:
         raise RuntimeError(f"Required environment variable '{ev}' not set!")
     return value
