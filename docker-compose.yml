@@ -2,12 +2,14 @@
 services:
   web:
     build: .
-    restart: always
+    container_name: django
+    restart: unless-stopped
     command: gunicorn --bind 0.0.0.0:8000 core.wsgi:application
     env_file:
       - ./.env
     environment:
-      - DJANGO_SETTINGS_MODULE=core.settings.production
+      DJANGO_SETTINGS_MODULE: core.settings.production
+      POSTGRES_PASSWORD: ""
     ports:
       - "8000:8000"
     depends_on:
@@ -15,9 +17,12 @@ services:
 
   db:
     image: postgres:17
-    restart: always
+    container_name: postgres
+    restart: unless-stopped
     env_file:
       - ./.env
+    environment:
+      DJANGO_SECRET_KEY: ""
     volumes:
       - pg_data:/var/lib/postgresql/data/
       - ./postgres/init/:/docker-entrypoint-initdb.d/:ro
@@ -26,8 +31,3 @@ services:
 
 volumes:
   pg_data:
-
-# networks:
-#   backend:
-#     name: ebproj
-#     driver: bridge
