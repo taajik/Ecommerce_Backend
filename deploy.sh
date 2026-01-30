@@ -4,7 +4,7 @@ set -e
 : '
 # django and postgres development run without compose:
 sudo docker run --name postgres --network ebproj -v pg_data:/var/lib/postgresql/data/ -v ./postgres/init/:/docker-entrypoint-initdb.d/ --env-file .env -d postgres:17
-sudo docker run --name django --network ebproj -p8000:8000 -v .:/app --env DJANGO_SETTINGS_MODULE=core.settings.development --env-file .env -d djangoapp:localrun
+sudo docker run --name django --network ebproj -p8000:8000 -v .:/app --env DJANGO_SETTINGS_MODULE=config.settings.development --env-file .env -d djangoapp:localrun
 sudo docker exec -it django python manage.py migrate
 '
 

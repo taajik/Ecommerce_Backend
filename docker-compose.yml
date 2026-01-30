@@ -4,11 +4,11 @@ services:
     build: .
     container_name: django
     restart: unless-stopped
-    command: gunicorn --bind 0.0.0.0:8000 core.wsgi:application
+    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
     env_file:
       - ./.env
     environment:
-      DJANGO_SETTINGS_MODULE: core.settings.production
+      DJANGO_SETTINGS_MODULE: config.settings.production
       POSTGRES_PASSWORD: ""
     ports:
       - "8000:8000"
