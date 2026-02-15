@@ -3,6 +3,8 @@ from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db import models
 
+from .utils import generate_unique_slug
+
 
 class Product(models.Model):
     """Core entity that represents a sellable product in the shop."""
@@ -13,6 +15,18 @@ class Product(models.Model):
     specs = models.JSONField(default=dict, blank=True)
     stock = models.PositiveIntegerField(default=0, blank=True)
     is_active = models.BooleanField(default=True, blank=True)
+    slug = models.SlugField(
+        max_length=255,
+        allow_unicode=True,
+        unique=True,
+        blank=True,
+        null=True,
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Product, self.title)
+        super().save(*args, **kwargs)
 
 
 class Comment(models.Model):
@@ -40,7 +54,19 @@ class Category(models.Model):
     """
 
     products = models.ManyToManyField(Product, blank=True)
-    title = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=30, unique=True)
+    slug = models.SlugField(
+        max_length=30,
+        allow_unicode=True,
+        unique=True,
+        blank=True,
+        null=True,
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Category, self.title)
+        super().save(*args, **kwargs)
 
 
 class CartItem(models.Model):
