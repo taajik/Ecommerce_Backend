@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db import models
 
-from .utils import generate_unique_slug
+from .utils import generate_unique_slug, product_image_upload_path
 
 
 class Product(models.Model):
@@ -27,6 +27,21 @@ class Product(models.Model):
         if not self.slug:
             self.slug = generate_unique_slug(Product, self.title)
         super().save(*args, **kwargs)
+
+
+class ProductImage(models.Model):
+    """Stores data of an image associated with a product.
+
+    The order to display the images is specified using the 'position' field.
+    """
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=product_image_upload_path)
+    alt_text = models.CharField(max_length=255, blank=True)
+    position = models.PositiveSmallIntegerField(default=0, blank=True)
+
+    class Meta:
+        ordering = ["position"]
 
 
 class Comment(models.Model):
