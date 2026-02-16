@@ -28,6 +28,9 @@ class Product(models.Model):
             self.slug = generate_unique_slug(Product, self.title)
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"Product {self.title}"
+
 
 class ProductImage(models.Model):
     """Stores data of an image associated with a product.
@@ -35,7 +38,11 @@ class ProductImage(models.Model):
     The order to display the images is specified using the 'position' field.
     """
 
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product,
+        related_name="images",
+        on_delete=models.CASCADE,
+    )
     image = models.ImageField(upload_to=product_image_upload_path)
     alt_text = models.CharField(max_length=255, blank=True)
     position = models.PositiveSmallIntegerField(default=0, blank=True)
@@ -43,15 +50,23 @@ class ProductImage(models.Model):
     class Meta:
         ordering = ["position"]
 
+    def __str__(self):
+        return f"Image ({self.position}) for {self.product.title}"
+
 
 class Comment(models.Model):
     """User-generated comment or review on a product."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        related_name="comments",
         on_delete=models.CASCADE,
     )
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product,
+        related_name="comments",
+        on_delete=models.CASCADE,
+    )
     reply_to = models.ForeignKey(
         "self",
         blank=True,
@@ -61,6 +76,9 @@ class Comment(models.Model):
     )
     text = models.TextField(validators=[MaxLengthValidator(1500)])
 
+    def __str__(self):
+        return f"Comment by {self.product.title} on {self.product.title}"
+
 
 class Category(models.Model):
     """Grouping for products.
@@ -68,7 +86,11 @@ class Category(models.Model):
     Products can belong to multiple categories.
     """
 
-    products = models.ManyToManyField(Product, blank=True)
+    products = models.ManyToManyField(
+        Product,
+        related_name="categories",
+        blank=True,
+    )
     title = models.CharField(max_length=30, unique=True)
     slug = models.SlugField(
         max_length=30,
@@ -83,6 +105,9 @@ class Category(models.Model):
             self.slug = generate_unique_slug(Category, self.title)
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"Category {self.title}"
+
 
 class CartItem(models.Model):
     """Intermediate model for relations between carts and products.
@@ -93,10 +118,12 @@ class CartItem(models.Model):
 
     cart = models.ForeignKey(
         "Cart",
+        related_name="items",
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
         Product,
+        related_name="cart_items",
         on_delete=models.CASCADE,
     )
     quantity = models.PositiveSmallIntegerField(
@@ -112,6 +139,9 @@ class CartItem(models.Model):
             )
         ]
 
+    def __str__(self):
+        return f"Cart Item {self.product.title}"
+
 
 class Cart(models.Model):
     """Shopping cart associated with a single user."""
@@ -124,7 +154,11 @@ class Cart(models.Model):
         Product,
         through=CartItem,
         blank=True,
+        related_name="carts",
     )
+
+    def __str__(self):
+        return f"Cart of {self.user}"
 
 
 class OrderItem(models.Model):
@@ -136,11 +170,13 @@ class OrderItem(models.Model):
 
     order = models.ForeignKey(
         "Order",
+        related_name="items",
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
         Product,
         null=True,
+        related_name="order_items",
         on_delete=models.SET_NULL,
     )
     price = models.DecimalField(max_digits=12, decimal_places=2)
@@ -156,6 +192,9 @@ class OrderItem(models.Model):
                 name="item_in_order_once_constraint"
             )
         ]
+
+    def __str__(self):
+        return f"Order item {self.product.title}"
 
 
 class Order(models.Model):
@@ -176,12 +215,14 @@ class Order(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        related_name="orders",
         on_delete=models.CASCADE,
     )
     products = models.ManyToManyField(
         Product,
         through=OrderItem,
         blank=True,
+        related_name="orders",
     )
     status = models.CharField(
         max_length=20,
@@ -197,6 +238,9 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"Order by {self.user} at {self.created_at}"
+
 
 class Payment(models.Model):
     """Payment record for an order."""
@@ -209,12 +253,16 @@ class Payment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Payment of order {self.order.id}"
+
 
 class Address(models.Model):
     """Addresses a user defines in their profile."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        related_name="addresses",
         on_delete=models.CASCADE,
     )
     country = models.CharField(max_length=30)
@@ -222,3 +270,6 @@ class Address(models.Model):
     city = models.CharField(max_length=30)
     address_line = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=30)
+
+    def __str__(self):
+        return f"Address of user {self.user}"
