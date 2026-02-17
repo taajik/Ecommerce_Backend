@@ -224,16 +224,16 @@ class Order(models.Model):
         blank=True,
         related_name="orders",
     )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=PENDING,
-    )
     total_price = models.DecimalField(  # TODO: should be calculated automatically
         max_digits=12,
         decimal_places=2,
         default=0,
         blank=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -245,16 +245,39 @@ class Order(models.Model):
 class Payment(models.Model):
     """Payment record for an order."""
 
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    PAID = "PAID"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
+    REFUNDED = "REFUNDED"
+    STATUS_CHOICES = {
+        PENDING: "Pending",
+        PROCESSING: "Processing",
+        PAID: "Paid",
+        FAILED: "Failed",
+        CANCELLED: "Cancelled",
+        EXPIRED: "Expired",
+        REFUNDED: "Refunded",
+    }
+
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
     provider = models.CharField(max_length=30)
+    transaction_id = models.CharField(max_length=255, unique=True, blank=True)
     amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
     )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Payment of order {self.order.id}"
+        return f"Payment {self.transaction_id}"
 
 
 class Address(models.Model):
