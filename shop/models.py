@@ -230,6 +230,7 @@ class Order(models.Model):
         default=0,
         blank=True,
     )
+    shipping_address = models.CharField(max_length=255)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -293,6 +294,10 @@ class Address(models.Model):
     city = models.CharField(max_length=30)
     address_line = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=30)
+
+    def get_full_address(self):
+        address_list = [self.country, self.state, self.city, self.address_line]
+        return ", ".join(filter(None, address_list))
 
     def __str__(self):
         return f"Address of user {self.user}"
