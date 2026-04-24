@@ -1,8 +1,8 @@
+name: ebproj
 
 services:
   web:
     build: .
-    container_name: django
     restart: unless-stopped
     command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
     env_file:
@@ -17,7 +17,6 @@ services:
 
   db:
     image: postgres:17
-    container_name: postgres
     restart: unless-stopped
     env_file:
       - ./.env
