@@ -3,9 +3,17 @@
 Dockerized backend project for an e-commerce store implemented using Django and PostgreSQL.
 
 
+## Set up
+
+Django and PostgreSQL need some environment variables for their configuration.
+
+To set them up, rename the [`.env.example`](/.env.example) file to `.env` and fill it with the right values.
+
+
 ## Run
 
-Use the deploy.sh script to run the project. Depending on the environment:
+After setting up the env file, use the deploy.sh script to run the project.
+Depending on the environment:
 ```
 # For production:
 deploy.sh prod
