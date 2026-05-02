@@ -6,13 +6,14 @@ from .models import (
 )
 
 
-class ReadOnlyModelSerializer(serializers.ModelSerializer):
-    """A base serializer that doesn't allow creation or update."""
+class ReadOnlyMixin:
+    """Mark all fields read-only and disallow creation or update."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
+    def get_fields(self):
+        fields = super().get_fields()
+        for field in fields.values():
             field.read_only = True
+        return fields
 
     def create(self, validated_data):
         raise serializers.ValidationError("Creation not allowed.")
@@ -21,9 +22,23 @@ class ReadOnlyModelSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError("Update not allowed.")
 
 
-class ProductSerializer(ReadOnlyModelSerializer):
+class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for product's full details."""
 
     class Meta:
         model = Product
-        fields = ("id", "slug", "title", "price", "description", "specs")
+        fields = ["id", "slug", "title", "price", "description", "specs"]
+
+
+class ProductListSerializer(ReadOnlyMixin,
+                            serializers.HyperlinkedModelSerializer):
+    """Serializer for a brief version of product;
+    including a url to its individual detailed endpoint.
+    """
+
+    class Meta:
+        model = Product
+        fields = ["url", "id", "title", "price"]
+        extra_kwargs = {
+            'url': {'view_name': 'shop:product', 'lookup_field': 'slug'}
+        }
