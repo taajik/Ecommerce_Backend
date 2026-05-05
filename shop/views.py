@@ -10,8 +10,8 @@ from .models import (
 )
 from .serializers import (
     ProductDetailSerializer,
-    ProductListSerializer,
     CategorySerializer,
+    ProductListSerializer,
 )
 
 

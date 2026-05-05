@@ -27,9 +27,36 @@ class ReadOnlyMixin:
 class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for product's full details."""
 
+    categories = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='title',
+    )
+
     class Meta:
         model = Product
-        fields = ["id", "slug", "title", "price", "description", "specs"]
+        fields = [
+            "id",
+            "slug",
+            "title",
+            "price",
+            "categories",
+            "description",
+            "specs",
+        ]
+
+
+class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for a category to list all the products in it."""
+
+    products = serializers.HyperlinkedIdentityField(
+        view_name="shop:category-products",
+        lookup_url_kwarg="category_pk",
+    )
+
+    class Meta:
+        model = Category
+        fields = ["id", "slug", "title", "products"]
 
 
 class ProductListSerializer(ReadOnlyMixin,
@@ -44,16 +71,3 @@ class ProductListSerializer(ReadOnlyMixin,
         extra_kwargs = {
             "url": {"view_name": "shop:product", "lookup_field": "slug"}
         }
-
-
-class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
-    """Serializer for a category to list all the products in it."""
-
-    products = serializers.HyperlinkedIdentityField(
-        view_name="shop:category-products",
-        lookup_url_kwarg="category_pk",
-    )
-
-    class Meta:
-        model = Category
-        fields = ["id", "slug", "title", "products"]
