@@ -1,8 +1,10 @@
 
 from rest_framework import serializers
+from rest_framework.exceptions import MethodNotAllowed
 
 from .models import (
     Product,
+    Category,
 )
 
 
@@ -16,10 +18,10 @@ class ReadOnlyMixin:
         return fields
 
     def create(self, validated_data):
-        raise serializers.ValidationError("Creation not allowed.")
+        raise MethodNotAllowed("POST", detail="Creation not allowed.")
 
     def update(self, instance, validated_data):
-        raise serializers.ValidationError("Update not allowed.")
+        raise MethodNotAllowed("PUT", detail="Update not allowed.")
 
 
 class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
@@ -42,3 +44,13 @@ class ProductListSerializer(ReadOnlyMixin,
         extra_kwargs = {
             'url': {'view_name': 'shop:product', 'lookup_field': 'slug'}
         }
+
+
+class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for a category to list all the products in it."""
+
+    products = ProductListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ["id", "slug", "title", "products"]

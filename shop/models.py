@@ -25,7 +25,8 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = generate_unique_slug(Product, self.title)
+            self.slug = generate_unique_slug(Product, self.title,
+                                             max_length=255)
         super().save(*args, **kwargs)
 
     def __str__(self):
