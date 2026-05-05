@@ -42,14 +42,17 @@ class ProductListSerializer(ReadOnlyMixin,
         model = Product
         fields = ["url", "id", "title", "price"]
         extra_kwargs = {
-            'url': {'view_name': 'shop:product', 'lookup_field': 'slug'}
+            "url": {"view_name": "shop:product", "lookup_field": "slug"}
         }
 
 
 class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for a category to list all the products in it."""
 
-    products = ProductListSerializer(many=True, read_only=True)
+    products = serializers.HyperlinkedIdentityField(
+        view_name="shop:category-products",
+        lookup_url_kwarg="category_pk",
+    )
 
     class Meta:
         model = Category
