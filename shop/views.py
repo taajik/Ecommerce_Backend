@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 
 from .models import (
     Product,
@@ -13,6 +14,10 @@ from .serializers import (
     CategorySerializer,
     ProductListSerializer,
 )
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 20
 
 
 class ProductDetailAPI(generics.RetrieveAPIView):
@@ -35,6 +40,7 @@ class CategoryProductListAPI(generics.ListAPIView):
     """View for listing products that are in a category."""
 
     serializer_class = ProductListSerializer
+    pagination_class = ProductPagination
 
     def get_queryset(self):
         category_pk = self.kwargs.get("category_pk")
