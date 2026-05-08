@@ -13,7 +13,7 @@ urlpatterns = [
     path("category/<str:slug>/",
          views.CategoryAPI.as_view(),
          name="category"),
-    path("products/category/<int:category_pk>/",
+    path("category/<int:category_pk>/products/",
          views.CategoryProductListAPI.as_view(),
          name="category-products"),
 ]

@@ -1,7 +1,10 @@
 
+import os
+
 from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db import models
+from PIL import Image as PILImage
 
 from .utils import generate_unique_slug, product_image_upload_path
 
@@ -37,6 +40,7 @@ class ProductImage(models.Model):
     """Stores data of an image associated with a product.
 
     The order to display the images is specified using the 'position' field.
+    A thumbnail is generated only for the first image of a product.
     """
 
     product = models.ForeignKey(
@@ -45,14 +49,40 @@ class ProductImage(models.Model):
         on_delete=models.CASCADE,
     )
     image = models.ImageField(upload_to=product_image_upload_path)
+    thumbnail = models.ImageField(blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True)
     position = models.PositiveSmallIntegerField(default=0, blank=True)
 
     class Meta:
         ordering = ["position"]
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.position == 0:
+            self.generate_thumbnail()
+
     def __str__(self):
         return f"Image ({self.position}) for {self.product.title}"
+
+    def generate_thumbnail(self):
+        """Generate and save the thumbnail version of this image."""
+        if not self.image:
+            return
+        if self.thumbnail and os.path.isfile(self.thumbnail.path):
+            return
+
+        img = PILImage.open(self.image.path)
+        img.thumbnail((200, 200))
+
+        thumb_name = f"thumb_{os.path.basename(self.image.name)}"
+        thumb_path = os.path.join("products/thumbnails", thumb_name)
+        full_path = os.path.join(settings.MEDIA_ROOT, thumb_path)
+
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        img.save(full_path)
+
+        self.thumbnail.name = thumb_path
+        super().save(update_fields=["thumbnail"])
 
 
 class Comment(models.Model):

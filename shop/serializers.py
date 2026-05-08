@@ -8,6 +8,7 @@ from rest_framework.reverse import reverse
 from .models import (
     Product,
     Category,
+    ProductImage,
 )
 
 
@@ -27,14 +28,23 @@ class ReadOnlyMixin:
         raise MethodNotAllowed("PUT", detail="Update not allowed.")
 
 
+class ProductImageSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for all of product images."""
+
+    class Meta:
+        model = ProductImage
+        fields = ["id", "image", "alt_text", "position"]
+
+
 class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for product's full details."""
 
     categories = serializers.SlugRelatedField(
         many=True,
         read_only=True,
-        slug_field='title',
+        slug_field="title",
     )
+    images = ProductImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -46,6 +56,7 @@ class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "categories",
             "description",
             "specs",
+            "images",
         ]
 
 
@@ -81,9 +92,26 @@ class ProductListSerializer(ReadOnlyMixin,
     including a url to its individual detailed endpoint.
     """
 
+    thumbnail = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ["url", "id", "title", "price"]
+        fields = ["url", "id", "title", "price", "thumbnail"]
         extra_kwargs = {
             "url": {"view_name": "shop:product", "lookup_field": "slug"}
         }
+
+    def get_thumbnail(self, obj):
+        request = self.context.get("request")
+        if hasattr(obj, "primary_images") and obj.primary_images:
+            image = obj.primary_images[0]
+        else:
+            image = obj.images.filter(position=0).first()
+
+        if image and request:
+            if image.thumbnail:
+                url = image.thumbnail.url
+            else:
+                url = image.image.url
+            return request.build_absolute_uri(url)
+        return None

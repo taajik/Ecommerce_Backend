@@ -6,7 +6,7 @@ set -e
 
 if [ "$1" = "down" ]
 then
-    docker compose down -v
+    docker compose down
 
 elif [ "$1" = "prod" ]
 then

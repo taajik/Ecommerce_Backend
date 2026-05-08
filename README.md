@@ -12,7 +12,7 @@ To set them up, rename the [`.env.example`](/.env.example) file to `.env` and fi
 
 ## Run
 
-After setting up the env file, use the deploy.sh script to run the project.
+After setting up the .env file, use the [deploy.sh](/deploy.sh) script to run the project.
 Depending on the environment:
 ```
 # For production:

@@ -1,4 +1,5 @@
 
+from django.db.models import Prefetch
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from .models import (
     Product,
     Category,
+    ProductImage,
 )
 from .serializers import (
     ProductDetailSerializer,
@@ -23,7 +25,7 @@ class ProductPagination(PageNumberPagination):
 class ProductDetailAPI(generics.RetrieveAPIView):
     """View for an individual product instance."""
 
-    queryset = Product.objects.all()
+    queryset = Product.objects.prefetch_related("images").all()
     serializer_class = ProductDetailSerializer
     lookup_field = "slug"
 
@@ -45,7 +47,15 @@ class CategoryProductListAPI(generics.ListAPIView):
     def get_queryset(self):
         category_pk = self.kwargs.get("category_pk")
         if category_pk is not None:
-            return Product.objects.filter(
+            queryset = Product.objects.filter(
                 categories__pk=category_pk
             )
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    "images",
+                    queryset=ProductImage.objects.filter(position=0),
+                    to_attr="primary_images"
+                )
+            )
+            return queryset
         raise NotFound()
