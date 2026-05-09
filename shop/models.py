@@ -74,7 +74,8 @@ class ProductImage(models.Model):
         img = PILImage.open(self.image.path)
         img.thumbnail((200, 200))
 
-        thumb_name = f"thumb_{os.path.basename(self.image.name)}"
+        dir_name = os.path.basename(os.path.dirname(self.image.path))
+        thumb_name = f"thumb_{dir_name}_{os.path.basename(self.image.name)}"
         thumb_path = os.path.join("products/thumbnails", thumb_name)
         full_path = os.path.join(settings.MEDIA_ROOT, thumb_path)
 
