@@ -96,7 +96,7 @@ class ProductListSerializer(ReadOnlyMixin,
 
     class Meta:
         model = Product
-        fields = ["url", "id", "title", "price", "thumbnail"]
+        fields = ["id", "url", "title", "price", "thumbnail"]
         extra_kwargs = {
             "url": {"view_name": "shop:product", "lookup_field": "slug"}
         }

@@ -1,15 +1,24 @@
 
 import os
 
+from django.db import models
 from django.conf import settings
 from django.core.validators import MaxLengthValidator
-from django.db import models
+from django.utils import timezone
 from PIL import Image as PILImage
 
 from .utils import generate_unique_slug, product_image_upload_path
 
 
-class Product(models.Model):
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(db_index=True, default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Product(BaseModel):
     """Core entity that represents a sellable product in the shop."""
 
     title = models.CharField(max_length=255)
@@ -36,7 +45,7 @@ class Product(models.Model):
         return f"Product {self.title}"
 
 
-class ProductImage(models.Model):
+class ProductImage(BaseModel):
     """Stores data of an image associated with a product.
 
     The order to display the images is specified using the 'position' field.
@@ -86,7 +95,7 @@ class ProductImage(models.Model):
         super().save(update_fields=["thumbnail"])
 
 
-class Comment(models.Model):
+class Comment(BaseModel):
     """User-generated comment or review on a product."""
 
     user = models.ForeignKey(
@@ -229,7 +238,7 @@ class OrderItem(models.Model):
         return f"Order item {self.product.title}"
 
 
-class Order(models.Model):
+class Order(BaseModel):
     """Represents a finalized purchase made by a user."""
 
     PENDING = "PENDING"
@@ -268,14 +277,12 @@ class Order(models.Model):
         choices=STATUS_CHOICES,
         default=PENDING,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order by user {self.user} at {self.created_at}"
 
 
-class Payment(models.Model):
+class Payment(BaseModel):
     """Payment record for an order."""
 
     PENDING = "PENDING"
@@ -307,13 +314,12 @@ class Payment(models.Model):
         choices=STATUS_CHOICES,
         default=PENDING,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Payment {self.transaction_id}"
 
 
-class Address(models.Model):
+class Address(BaseModel):
     """Addresses a user defines in their profile."""
 
     user = models.ForeignKey(
