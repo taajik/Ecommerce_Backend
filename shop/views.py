@@ -10,16 +10,22 @@ from .models import (
     Product,
     Category,
     ProductImage,
+    Comment,
 )
 from .serializers import (
     ProductDetailSerializer,
-    CategorySerializer,
     ProductListSerializer,
+    CategorySerializer,
+    CommentListSerializer,
 )
 
 
 class ProductPagination(PageNumberPagination):
     page_size = 20
+
+
+class CommentPagination(PageNumberPagination):
+    page_size = 15
 
 
 class ProductDetailAPI(generics.RetrieveAPIView):
@@ -58,4 +64,19 @@ class CategoryProductListAPI(generics.ListAPIView):
                 )
             )
             return queryset
+        raise NotFound()
+
+
+class ProductCommentListAPI(generics.ListAPIView):
+    """View for listing comments of a product."""
+
+    serializer_class = CommentListSerializer
+    pagination_class = CommentPagination
+
+    def get_queryset(self):
+        product_pk = self.kwargs.get("product_pk")
+        if product_pk is not None:
+            return Comment.objects.filter(
+                product_id=product_pk
+            )
         raise NotFound()

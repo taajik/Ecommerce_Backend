@@ -9,6 +9,7 @@ from .models import (
     Product,
     Category,
     ProductImage,
+    Comment,
 )
 
 
@@ -45,6 +46,10 @@ class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
         slug_field="title",
     )
     images = ProductImageSerializer(many=True, read_only=True)
+    comments = serializers.HyperlinkedIdentityField(
+        view_name="shop:product-comments",
+        lookup_url_kwarg="product_pk",
+    )
 
     class Meta:
         model = Product
@@ -57,33 +62,8 @@ class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "description",
             "specs",
             "images",
+            "comments",
         ]
-
-
-class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
-    """Serializer for a category to list all the products in it."""
-
-    products = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Category
-        fields = ["id", "slug", "title", "products"]
-
-    def get_products(self, obj):
-        request = self.context.get("request")
-        if not request:
-            return None
-
-        url = reverse(
-            "shop:category-products",
-            kwargs={"category_pk": obj.pk},
-            request=request,
-        )
-
-        page_num = request.query_params.get("page", None)
-        if page_num and page_num.isdigit():
-            return f"{url}?{urlencode({'page': page_num})}"
-        return url
 
 
 class ProductListSerializer(ReadOnlyMixin,
@@ -115,3 +95,38 @@ class ProductListSerializer(ReadOnlyMixin,
                 url = image.image.url
             return request.build_absolute_uri(url)
         return None
+
+
+class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for a category to list all the products in it."""
+
+    products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ["id", "slug", "title", "products"]
+
+    def get_products(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+
+        url = reverse(
+            "shop:category-products",
+            kwargs={"category_pk": obj.pk},
+            request=request,
+        )
+
+        page_num = request.query_params.get("page", None)
+        if page_num and page_num.isdigit():
+            return f"{url}?{urlencode({'page': page_num})}"
+        return url
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    """Serializer for product comments."""
+
+    class Meta:
+        model = Comment
+        fields = ["id", "user", "reply_to", "text", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
