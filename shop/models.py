@@ -118,7 +118,7 @@ class Comment(BaseModel):
     text = models.TextField(validators=[MaxLengthValidator(1500)])
 
     def __str__(self):
-        return f"Comment by {self.product.title} on {self.product.title}"
+        return f"Comment by {self.user.email} on {self.product.title}"
 
 
 class Category(models.Model):

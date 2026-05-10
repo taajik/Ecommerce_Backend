@@ -9,7 +9,7 @@ def generate_unique_slug(model, value, max_length=30):
     add a number to this new slug. (like duplicate-slug-2)
     """
 
-    base_slug = slugify(value[:max_length])
+    base_slug = slugify(value[:max_length], allow_unicode=True)
     slug = base_slug
     counter = 2
 
