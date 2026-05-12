@@ -1,7 +1,7 @@
 
 from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
-from rest_framework.exceptions import NotFound
 from rest_framework.permissions import (
     BasePermission,
     IsAuthenticatedOrReadOnly,
@@ -65,19 +65,16 @@ class CategoryProductListAPI(generics.ListAPIView):
 
     def get_queryset(self):
         category_pk = self.kwargs.get("category_pk")
-        if category_pk is not None:
-            queryset = Product.objects.filter(
-                categories__pk=category_pk
+        category = get_object_or_404(Category, pk=category_pk)
+        queryset = Product.objects.filter(categories=category)
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                "images",
+                queryset=ProductImage.objects.filter(position=0),
+                to_attr="primary_images"
             )
-            queryset = queryset.prefetch_related(
-                Prefetch(
-                    "images",
-                    queryset=ProductImage.objects.filter(position=0),
-                    to_attr="primary_images"
-                )
-            )
-            return queryset
-        raise NotFound()
+        )
+        return queryset
 
 
 class ProductCommentAPI(generics.ListCreateAPIView):
@@ -89,8 +86,5 @@ class ProductCommentAPI(generics.ListCreateAPIView):
 
     def get_queryset(self):
         product_pk = self.kwargs.get("product_pk")
-        if product_pk is not None:
-            return Comment.objects.filter(
-                product_id=product_pk
-            )
-        raise NotFound()
+        product = get_object_or_404(Product, pk=product_pk)
+        return Comment.objects.filter(product=product)
