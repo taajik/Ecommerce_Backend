@@ -88,3 +88,8 @@ class ProductCommentAPI(generics.ListCreateAPIView):
         product_pk = self.kwargs.get("product_pk")
         product = get_object_or_404(Product, pk=product_pk)
         return Comment.objects.filter(product=product)
+
+    def perform_create(self, serializer):
+        product_pk = self.kwargs.get("product_pk")
+        product = get_object_or_404(Product, pk=product_pk)
+        serializer.save(product=product)
