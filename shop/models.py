@@ -71,7 +71,7 @@ class ProductImage(BaseModel):
             self.generate_thumbnail()
 
     def __str__(self):
-        return f"Image ({self.position}) for {self.product.title}"
+        return f"Image ({self.position}) for product {self.product_id}"
 
     def generate_thumbnail(self):
         """Generate and save the thumbnail version of this image."""
@@ -118,7 +118,7 @@ class Comment(BaseModel):
     text = models.TextField(validators=[MaxLengthValidator(1500)])
 
     def __str__(self):
-        return f"Comment by {self.user.email} on {self.product.title}"
+        return f"Comment {self.pk} by {self.user} on product {self.product_id}"
 
 
 class Category(models.Model):
@@ -181,7 +181,7 @@ class CartItem(models.Model):
         ]
 
     def __str__(self):
-        return f"Cart Item {self.product.title}"
+        return f"Cart Item (product {self.product_id})"
 
 
 class Cart(models.Model):
@@ -235,7 +235,7 @@ class OrderItem(models.Model):
         ]
 
     def __str__(self):
-        return f"Order item {self.product.title}"
+        return f"Order item (product {self.product_id})"
 
 
 class Order(BaseModel):
@@ -279,7 +279,8 @@ class Order(BaseModel):
     )
 
     def __str__(self):
-        return f"Order by user {self.user} at {self.created_at}"
+        creation_time = self.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        return f"Order by user {self.user} at {creation_time}"
 
 
 class Payment(BaseModel):
