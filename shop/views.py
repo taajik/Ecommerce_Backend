@@ -1,9 +1,12 @@
 
 from django.db.models import Prefetch
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
+from rest_framework.permissions import (
+    BasePermission,
+    IsAuthenticatedOrReadOnly,
+    SAFE_METHODS,
+)
 from rest_framework.pagination import PageNumberPagination
 
 from .models import (
@@ -20,6 +23,11 @@ from .serializers import (
 )
 
 
+class ReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS
+
+
 class ProductPagination(PageNumberPagination):
     page_size = 20
 
@@ -28,12 +36,15 @@ class CommentPagination(PageNumberPagination):
     page_size = 15
 
 
+
+
 class ProductDetailAPI(generics.RetrieveAPIView):
     """View for an individual product instance."""
 
     queryset = Product.objects.prefetch_related("images").all()
     serializer_class = ProductDetailSerializer
     lookup_field = "slug"
+    permission_classes = [ReadOnly]
 
 
 class CategoryAPI(generics.RetrieveAPIView):
@@ -42,12 +53,14 @@ class CategoryAPI(generics.RetrieveAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = "slug"
+    permission_classes = [ReadOnly]
 
 
 class CategoryProductListAPI(generics.ListAPIView):
     """View for listing products that are in a category."""
 
     serializer_class = ProductListSerializer
+    permission_classes = [ReadOnly]
     pagination_class = ProductPagination
 
     def get_queryset(self):
@@ -67,10 +80,11 @@ class CategoryProductListAPI(generics.ListAPIView):
         raise NotFound()
 
 
-class ProductCommentListAPI(generics.ListAPIView):
-    """View for listing comments of a product."""
+class ProductCommentAPI(generics.ListCreateAPIView):
+    """View to create and list comments of a product."""
 
     serializer_class = CommentListSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = CommentPagination
 
     def get_queryset(self):

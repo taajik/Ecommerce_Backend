@@ -17,6 +17,6 @@ urlpatterns = [
          views.CategoryProductListAPI.as_view(),
          name="category-products"),
     path("product/<int:product_pk>/comments/",
-         views.ProductCommentListAPI.as_view(),
+         views.ProductCommentAPI.as_view(),
          name="product-comments"),
 ]
