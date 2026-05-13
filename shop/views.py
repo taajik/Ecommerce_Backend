@@ -87,7 +87,9 @@ class ProductCommentAPI(generics.ListCreateAPIView):
     def get_queryset(self):
         product_pk = self.kwargs.get("product_pk")
         product = get_object_or_404(Product, pk=product_pk)
-        return Comment.objects.filter(product=product)
+        queryset = Comment.objects.filter(product=product, is_approved=True)
+        queryset = queryset.select_related("user")
+        return queryset
 
     def perform_create(self, serializer):
         product_pk = self.kwargs.get("product_pk")

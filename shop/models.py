@@ -116,9 +116,10 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
     )
     text = models.TextField(validators=[MaxLengthValidator(1500)])
+    is_approved = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
-        return f"Comment {self.pk} by {self.user} on product {self.product_id}"
+        return f"Comment {self.pk} by user {self.user_id} on product {self.product_id}"
 
 
 class Category(models.Model):
@@ -199,7 +200,7 @@ class Cart(models.Model):
     )
 
     def __str__(self):
-        return f"Cart of user {self.user}"
+        return f"Cart of user {self.user_id}"
 
 
 class OrderItem(models.Model):
@@ -280,7 +281,7 @@ class Order(BaseModel):
 
     def __str__(self):
         creation_time = self.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        return f"Order by user {self.user} at {creation_time}"
+        return f"Order by user {self.user_id} at {creation_time}"
 
 
 class Payment(BaseModel):
@@ -339,4 +340,4 @@ class Address(BaseModel):
         return ", ".join(filter(None, address_list))
 
     def __str__(self):
-        return f"Address of user {self.user}"
+        return f"Address of user {self.user_id}"

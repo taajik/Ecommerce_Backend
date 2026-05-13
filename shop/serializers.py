@@ -14,7 +14,7 @@ from .models import (
 
 
 class ReadOnlyMixin:
-    """Mark all fields read-only and disallow creation or update."""
+    """Mark all fields read-only and disallow creation and update."""
 
     def get_fields(self):
         fields = super().get_fields()
