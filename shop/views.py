@@ -1,6 +1,6 @@
 
-from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 from rest_framework import generics
 from rest_framework.permissions import (
     BasePermission,

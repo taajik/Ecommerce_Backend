@@ -2,6 +2,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -9,10 +10,16 @@ class UserManager(BaseUserManager):
 
     def _create_user(self, email, password, **extra_fields):
         if not email:
-            raise ValueError("The email must be set")
-        email = self.normalize_email(email)
+            raise ValueError("The email must be set.")
+        email = self.normalize_email(email.lower())
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+
+        if password is not None:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
+        user.full_clean()
         user.save(using=self._db)
         return user
 
@@ -39,6 +46,7 @@ class User(AbstractUser):
 
     username = None
     email = models.EmailField("email address", unique=True)
+    created_at = models.DateTimeField(db_index=True, default=timezone.now)
 
     objects = UserManager()
 
