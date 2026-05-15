@@ -35,3 +35,27 @@ class UserSignupSerializer(serializers.ModelSerializer):
         validated_data.pop("confirm_password")
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    """Serializer for user details."""
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "created_at",
+            # "addresses",
+            # "cart",
+            # "orders",
+        ]
+        read_only_fields = ["email", "created_at"]
+
+    def create(self, validated_data):
+        raise serializers.ValidationError(
+            "Creating users through this endpoint is not allowed. "
+            "Please use the signup endpoint."
+        )

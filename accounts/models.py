@@ -2,7 +2,8 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils import timezone
+
+from common.models import BaseModel
 
 
 class UserManager(BaseUserManager):
@@ -41,12 +42,11 @@ class UserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-class User(AbstractUser):
+class User(BaseModel, AbstractUser):
     """Custom user model with email as primary field."""
 
     username = None
     email = models.EmailField("email address", unique=True)
-    created_at = models.DateTimeField(db_index=True, default=timezone.now)
 
     objects = UserManager()
 
