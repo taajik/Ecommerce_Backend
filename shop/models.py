@@ -4,18 +4,11 @@ import os
 from django.db import models
 from django.conf import settings
 from django.core.validators import MaxLengthValidator
-from django.utils import timezone
 from PIL import Image as PILImage
 
-from .utils import generate_unique_slug, product_image_upload_path
-
-
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(db_index=True, default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from common.models import BaseModel
+from common.utils import generate_unique_slug
+from .utils import product_image_upload_path
 
 
 class Product(BaseModel):

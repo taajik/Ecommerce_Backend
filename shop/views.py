@@ -2,13 +2,10 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from rest_framework import generics
-from rest_framework.permissions import (
-    BasePermission,
-    IsAuthenticatedOrReadOnly,
-    SAFE_METHODS,
-)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
 
+from common.permissions import ReadOnly
 from .models import (
     Product,
     Category,
@@ -23,19 +20,12 @@ from .serializers import (
 )
 
 
-class ReadOnly(BasePermission):
-    def has_permission(self, request, view):
-        return request.method in SAFE_METHODS
-
-
 class ProductPagination(PageNumberPagination):
     page_size = 20
 
 
 class CommentPagination(PageNumberPagination):
     page_size = 15
-
-
 
 
 class ProductDetailAPI(generics.RetrieveAPIView):

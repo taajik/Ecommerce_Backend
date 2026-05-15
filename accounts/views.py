@@ -1,8 +1,9 @@
 
 from django.contrib.auth import get_user_model
 from rest_framework import generics
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 
+from common.permissions import IsOwnUser
 from .serializers import (
     UserSignupSerializer,
     UserDetailSerializer,
@@ -10,13 +11,6 @@ from .serializers import (
 
 
 User = get_user_model()
-
-
-class IsUserOwner(BasePermission):
-    """Permission to only allow a user to access their own user object."""
-
-    def has_object_permission(self, request, view, obj):
-        return obj == request.user
 
 
 class UserRegisterAPI(generics.CreateAPIView):
@@ -30,7 +24,7 @@ class UserProfileAPI(generics.RetrieveUpdateAPIView):
     """View for a user's details."""
 
     serializer_class = UserDetailSerializer
-    permission_classes = [IsAuthenticated, IsUserOwner]
+    permission_classes = [IsAuthenticated, IsOwnUser]
 
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
