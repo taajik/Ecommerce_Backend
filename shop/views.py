@@ -57,13 +57,7 @@ class CategoryProductListAPI(generics.ListAPIView):
         category_pk = self.kwargs.get("category_pk")
         category = get_object_or_404(Category, pk=category_pk)
         queryset = Product.objects.filter(categories=category)
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                "images",
-                queryset=ProductImage.objects.filter(position=0),
-                to_attr="primary_images"
-            )
-        )
+        queryset = queryset.select_related("primary_image")
         return queryset
 
 

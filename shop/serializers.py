@@ -56,7 +56,10 @@ class ProductListSerializer(ReadOnlyMixin,
     including a url to its individual detailed endpoint.
     """
 
-    thumbnail = serializers.SerializerMethodField()
+    thumbnail = serializers.ImageField(
+        source="primary_image.thumbnail",
+        read_only=True,
+    )
 
     class Meta:
         model = Product
@@ -64,21 +67,6 @@ class ProductListSerializer(ReadOnlyMixin,
         extra_kwargs = {
             "url": {"view_name": "shop:product", "lookup_field": "slug"}
         }
-
-    def get_thumbnail(self, obj):
-        request = self.context.get("request")
-        if hasattr(obj, "primary_images") and obj.primary_images:
-            image = obj.primary_images[0]
-        else:
-            image = obj.images.filter(position=0).first()
-
-        if image and request:
-            if image.thumbnail:
-                url = image.thumbnail.url
-            else:
-                url = image.image.url
-            return request.build_absolute_uri(url)
-        return None
 
 
 class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):

@@ -27,6 +27,13 @@ class Product(BaseModel):
         blank=True,
         null=True,
     )
+    primary_image = models.ForeignKey(
+        "ProductImage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_for_products",
+    )
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -61,31 +68,45 @@ class ProductImage(BaseModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.position == 0:
-            self.generate_thumbnail()
-
-    def __str__(self):
-        return f"Image ({self.position}) for product {self.product_id}"
+            # If this image is the primary image, generate a thumbnail for it
+            # and set it as primary_image of the product.
+            thumbnail_exists = self.generate_thumbnail()
+            if thumbnail_exists and self.product.primary_image_id != self.id:
+                self.product.primary_image = self
+                self.product.save(update_fields=["primary_image"])
 
     def generate_thumbnail(self):
         """Generate and save the thumbnail version of this image."""
         if not self.image:
-            return
+            return False
         if self.thumbnail and os.path.isfile(self.thumbnail.path):
-            return
+            return True
 
         img = PILImage.open(self.image.path)
         img.thumbnail((200, 200))
 
-        dir_name = os.path.basename(os.path.dirname(self.image.path))
-        thumb_name = f"thumb_{dir_name}_{os.path.basename(self.image.name)}"
+        thumb_name = f"thumb_{os.path.basename(self.image.name)}"
         thumb_path = os.path.join("products/thumbnails", thumb_name)
         full_path = os.path.join(settings.MEDIA_ROOT, thumb_path)
 
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         img.save(full_path)
-
         self.thumbnail.name = thumb_path
         super().save(update_fields=["thumbnail"])
+        return True
+
+    def delete(self, *args, **kwargs):
+        product = self.product
+        was_primary = self.position == 0
+        super().delete(*args, **kwargs)
+
+        if was_primary:
+            # Find the new primary image after deletion
+            new_primary = product.images.filter(position=0).first()
+            product.primary_image = new_primary
+            product.save(update_fields=["primary_image"])
+
+    def __str__(self):
+        return f"Image ({self.position}) for product {self.product_id}"
 
 
 class Comment(BaseModel):
