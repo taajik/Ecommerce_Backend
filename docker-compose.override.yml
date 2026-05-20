@@ -6,3 +6,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.development
     volumes:
       - .:/app
+      - shellhistory:/root
+
+volumes:
+  shellhistory:
