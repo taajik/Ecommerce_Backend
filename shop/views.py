@@ -1,6 +1,6 @@
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
+from django.contrib.postgres.aggregates import ArrayAgg
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
@@ -9,7 +9,6 @@ from common.permissions import ReadOnly
 from .models import (
     Product,
     Category,
-    ProductImage,
     Comment,
 )
 from .serializers import (
@@ -31,7 +30,9 @@ class CommentPagination(PageNumberPagination):
 class ProductDetailAPI(generics.RetrieveAPIView):
     """View for an individual product instance."""
 
-    queryset = Product.objects.prefetch_related("images").all()
+    queryset = Product.objects.annotate(
+        categories_list=ArrayAgg("categories__title")
+    ).prefetch_related("images")
     serializer_class = ProductDetailSerializer
     lookup_field = "slug"
     permission_classes = [ReadOnly]

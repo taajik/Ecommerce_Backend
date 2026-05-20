@@ -24,11 +24,7 @@ class ProductImageSerializer(ReadOnlyMixin, serializers.ModelSerializer):
 class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for product's full details."""
 
-    categories = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field="title",
-    )
+    categories_list = serializers.SerializerMethodField()
     images = ProductImageSerializer(many=True, read_only=True)
     comments = serializers.HyperlinkedIdentityField(
         view_name="shop:product-comments",
@@ -42,12 +38,15 @@ class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "slug",
             "title",
             "price",
-            "categories",
+            "categories_list",
             "description",
             "specs",
             "images",
             "comments",
         ]
+
+    def get_categories_list(self, obj):
+        return getattr(obj, "categories_list", [])
 
 
 class ProductListSerializer(ReadOnlyMixin,
