@@ -10,6 +10,7 @@ from .models import (
     Category,
     ProductImage,
     Comment,
+    Address,
 )
 
 
@@ -121,4 +122,26 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Cannot reply to unapproved comment."
             )
+        return value
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    """Serializer for user addresses."""
+
+    class Meta:
+        model = Address
+        fields = [
+            "id",
+            "country",
+            "state",
+            "city",
+            "address_line",
+            "postal_code",
+            "created_at",
+        ]
+        read_only_fields = ["created_at"]
+
+    def validate_postal_code(self, value):
+        if len(value) < 4:
+            raise serializers.ValidationError("Postal code is too short.")
         return value

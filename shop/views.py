@@ -3,14 +3,18 @@ from django.shortcuts import get_object_or_404
 from django.db.models import F
 from django.contrib.postgres.aggregates import ArrayAgg
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.pagination import PageNumberPagination
 
-from common.permissions import ReadOnly
+from common.permissions import IsOwner, ReadOnly
 from .models import (
     Product,
     Category,
     Comment,
+    Address,
 )
 from .serializers import (
     ProductDetailSerializer,
@@ -18,6 +22,7 @@ from .serializers import (
     CategorySerializer,
     CommentListSerializer,
     CommentCreateSerializer,
+    AddressSerializer,
 )
 
 
@@ -99,3 +104,27 @@ class ProductCommentAPI(generics.ListCreateAPIView):
             product_pk = self.kwargs.get("product_pk")
             self._product = get_object_or_404(Product, pk=product_pk)
         return self._product
+
+
+class AddressAPI(generics.ListCreateAPIView):
+    """View to create and list addresses for a user."""
+
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AddressDetailAPI(generics.RetrieveUpdateDestroyAPIView):
+    """View to edit a user address."""
+
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)

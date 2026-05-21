@@ -48,9 +48,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "created_at",
-            # "addresses",
-            # "cart",
-            # "orders",
         ]
         read_only_fields = ["email", "created_at"]
 

@@ -1,5 +1,5 @@
 
-from django.urls import path
+from django.urls import path, include
 
 from . import views
 
@@ -19,4 +19,12 @@ urlpatterns = [
     path("product/<int:product_pk>/comments/",
          views.ProductCommentAPI.as_view(),
          name="product-comments"),
+    path("user/", include([
+        path("address/",
+             views.AddressAPI.as_view(),
+             name="address-list"),
+        path("address/<int:pk>/",
+             views.AddressDetailAPI.as_view(),
+             name="address-detail"),
+    ]), name="user")
 ]
