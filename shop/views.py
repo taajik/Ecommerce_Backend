@@ -1,5 +1,6 @@
 
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 from django.contrib.postgres.aggregates import ArrayAgg
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -16,6 +17,7 @@ from .serializers import (
     ProductListSerializer,
     CategorySerializer,
     CommentListSerializer,
+    CommentCreateSerializer,
 )
 
 
@@ -65,18 +67,35 @@ class CategoryProductListAPI(generics.ListAPIView):
 class ProductCommentAPI(generics.ListCreateAPIView):
     """View to create and list comments of a product."""
 
-    serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = CommentPagination
 
     def get_queryset(self):
-        product_pk = self.kwargs.get("product_pk")
-        product = get_object_or_404(Product, pk=product_pk)
-        queryset = Comment.objects.filter(product=product, is_approved=True)
-        queryset = queryset.select_related("user")
-        return queryset
+        queryset = Comment.objects.filter(
+            product=self.get_product(),
+            is_approved=True,
+        )
+        queryset = queryset.annotate(user_name=F("user__email"))
+        return queryset.order_by("-created_at")
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return CommentCreateSerializer
+        return CommentListSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["product_pk"] = self.kwargs.get("product_pk")
+        return context
 
     def perform_create(self, serializer):
-        product_pk = self.kwargs.get("product_pk")
-        product = get_object_or_404(Product, pk=product_pk)
-        serializer.save(product=product)
+        serializer.save(
+            product=self.get_product(),
+            user=self.request.user,
+        )
+
+    def get_product(self):
+        if not hasattr(self, "_product"):
+            product_pk = self.kwargs.get("product_pk")
+            self._product = get_object_or_404(Product, pk=product_pk)
+        return self._product

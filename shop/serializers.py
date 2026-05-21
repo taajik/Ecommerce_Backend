@@ -94,10 +94,31 @@ class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
         return url
 
 
-class CommentListSerializer(serializers.ModelSerializer):
-    """Serializer for product comments."""
+class CommentListSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for listing product comments."""
+
+    user_name = serializers.CharField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "reply_to", "text", "created_at"]
+        fields = ["id", "user_name", "reply_to_id", "text", "created_at"]
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating product comments."""
+
+    class Meta:
+        model = Comment
+        fields = ["id", "reply_to", "text", "created_at"]
         read_only_fields = ["created_at"]
+
+    def validate_reply_to(self, value):
+        if value and value.product_id != self.context.get("product_pk"):
+            raise serializers.ValidationError(
+                "Reply must be on the same product."
+            )
+        if value and not value.is_approved:
+            raise serializers.ValidationError(
+                "Cannot reply to unapproved comment."
+            )
+        return value
