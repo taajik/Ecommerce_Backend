@@ -11,6 +11,8 @@ from .models import (
     ProductImage,
     Comment,
     Address,
+    Cart,
+    CartItem,
 )
 
 
@@ -145,3 +147,35 @@ class AddressSerializer(serializers.ModelSerializer):
         if len(value) < 4:
             raise serializers.ValidationError("Postal code is too short.")
         return value
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    """Serializer for items of the cart-product relation."""
+
+    product = serializers.SerializerMethodField()
+    quantity = serializers.IntegerField(max_value=999, min_value=1, default=1)
+
+    class Meta:
+        model = CartItem
+        fields = ["product", "quantity"]
+
+    def get_product(self, obj):
+        # Simple representation without request in context,
+        # doesn't need full nested object; just the id.
+        request = self.context.get("request")
+        if request:
+            return ProductListSerializer(
+                obj.product,
+                context={"request": request},
+            ).data
+        else:
+            return obj.product_id
+
+class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for user's cart."""
+
+    items = CartItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ["items"]

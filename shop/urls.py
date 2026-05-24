@@ -26,5 +26,11 @@ urlpatterns = [
         path("address/<int:pk>/",
              views.AddressDetailAPI.as_view(),
              name="address-detail"),
+        path("cart/",
+             views.CartAPI.as_view(),
+             name="cart"),
+        path("cart/item/<int:product_pk>/",
+             views.CartItemView.as_view(),
+             name="cart-item"),
     ]), name="user")
 ]

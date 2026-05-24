@@ -1,8 +1,13 @@
 
-from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.db.models import F
+from django.db.models import Prefetch
 from django.contrib.postgres.aggregates import ArrayAgg
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.serializers import ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
@@ -15,6 +20,8 @@ from .models import (
     Category,
     Comment,
     Address,
+    Cart,
+    CartItem,
 )
 from .serializers import (
     ProductDetailSerializer,
@@ -23,6 +30,8 @@ from .serializers import (
     CommentListSerializer,
     CommentCreateSerializer,
     AddressSerializer,
+    CartSerializer,
+    CartItemSerializer,
 )
 
 
@@ -75,6 +84,12 @@ class ProductCommentAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = CommentPagination
 
+    def get_product(self):
+        if not hasattr(self, "_product"):
+            product_pk = self.kwargs.get("product_pk")
+            self._product = get_object_or_404(Product, pk=product_pk)
+        return self._product
+
     def get_queryset(self):
         queryset = Comment.objects.filter(
             product=self.get_product(),
@@ -99,12 +114,6 @@ class ProductCommentAPI(generics.ListCreateAPIView):
             user=self.request.user,
         )
 
-    def get_product(self):
-        if not hasattr(self, "_product"):
-            product_pk = self.kwargs.get("product_pk")
-            self._product = get_object_or_404(Product, pk=product_pk)
-        return self._product
-
 
 class AddressAPI(generics.ListCreateAPIView):
     """View to create and list addresses for a user."""
@@ -128,3 +137,85 @@ class AddressDetailAPI(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Address.objects.filter(user=self.request.user)
+
+
+class CartAPI(generics.RetrieveAPIView):
+    """View to list products in a user's cart."""
+
+    serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
+
+    def get_object(self):
+        cart, created = Cart.objects.prefetch_related(
+            Prefetch(
+                "items",
+                queryset=CartItem.objects.select_related("product"),
+            )
+        ).get_or_create(user=self.request.user)
+        return cart
+
+
+class CartItemView(APIView):
+    """View to add, update, or delete an item in the cart."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_cart(self):
+        cart, created = Cart.objects.get_or_create(user=self.request.user)
+        return cart
+
+    @transaction.atomic
+    def post(self, request, product_pk=None):
+        """Add item to cart."""
+        serializer = CartItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        cart = self.get_cart()
+        product = get_object_or_404(Product, id=product_pk)
+        quantity = serializer.validated_data.get("quantity", 1)
+        if product.stock < quantity:
+            raise ValidationError("Insufficient stock.")
+
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={"quantity": quantity}
+        )
+        if not created and quantity != cart_item.quantity:
+            cart_item.quantity = quantity
+            cart_item.save()
+
+        return Response(
+            CartItemSerializer(cart_item).data,
+            status=status.HTTP_201_CREATED if created
+            else status.HTTP_200_OK
+        )
+
+    def put(self, request, product_pk=None):
+        """Update item quantity in cart."""
+        return self._update_quantity(request, product_pk)
+
+    def patch(self, request, product_pk=None):
+        """Update item quantity in cart."""
+        return self._update_quantity(request, product_pk)
+
+    def _update_quantity(self, request, product_pk=None):
+        cart = self.get_cart()
+        cart_item = get_object_or_404(CartItem, cart=cart,
+                                      product_id=product_pk)
+
+        serializer = CartItemSerializer(cart_item, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, product_pk=None):
+        """Remove item from cart."""
+        cart = self.get_cart()
+        cart_item = get_object_or_404(CartItem, cart=cart,
+                                      product_id=product_pk)
+        cart_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
