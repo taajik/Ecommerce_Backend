@@ -213,7 +213,8 @@ class OrderItemSerializer(ReadOnlyMixin, serializers.ModelSerializer):
         ret["product"].pop("price", None)
         return ret
 
-class OrderSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+
+class OrderDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for an order."""
 
     items = OrderItemSerializer(many=True, read_only=True)
@@ -229,3 +230,25 @@ class OrderSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class OrderListSerializer(ReadOnlyMixin,
+                          serializers.HyperlinkedModelSerializer):
+    """Serializer for listing user orders without their items."""
+
+    num_items = serializers.IntegerField(max_value=999, min_value=1, default=1)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "url",
+            "num_items",
+            "total_price",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "url": {"view_name": "shop:order-detail"}
+        }

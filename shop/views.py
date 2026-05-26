@@ -2,7 +2,7 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Count
 from django.db.models import Prefetch
 from django.contrib.postgres.aggregates import ArrayAgg
 from rest_framework import generics, status
@@ -36,7 +36,8 @@ from .serializers import (
     AddressSerializer,
     CartSerializer,
     CartItemSerializer,
-    OrderSerializer,
+    OrderDetailSerializer,
+    OrderListSerializer,
     CheckOutSerializer,
 )
 
@@ -47,6 +48,10 @@ class ProductPagination(PageNumberPagination):
 
 class CommentPagination(PageNumberPagination):
     page_size = 15
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 5
 
 
 
@@ -238,9 +243,23 @@ class CartItemAPI(APIView):
 
 
 class OrderAPI(APIView):
-    """View to create orders for a user."""
+    """View to list and create orders for a user."""
 
     permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """List all orders of a user."""
+        queryset = Order.objects.filter(
+            user=self.request.user
+        ).order_by("-updated_at")
+        queryset = queryset.annotate(num_items=Count("items"))
+
+        paginator = OrderPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request,
+                                                         view=self)
+        serializer = OrderListSerializer(paginated_queryset, many=True,
+                                         context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
 
     @transaction.atomic
     def post(self, request):
@@ -283,7 +302,7 @@ class OrderAPI(APIView):
         CartItem.objects.filter(cart=cart).delete()
 
         return Response(
-            OrderSerializer(order, context={"request": request}).data,
+            OrderDetailSerializer(order, context={"request": request}).data,
             status=status.HTTP_201_CREATED
         )
 
@@ -291,7 +310,7 @@ class OrderAPI(APIView):
 class OrderDetailAPI(generics.RetrieveAPIView):
     """View for each order's details."""
 
-    serializer_class = OrderSerializer
+    serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
