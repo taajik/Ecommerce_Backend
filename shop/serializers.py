@@ -208,6 +208,10 @@ class OrderItemSerializer(ReadOnlyMixin, serializers.ModelSerializer):
         model = OrderItem
         fields = ["product", "price", "quantity"]
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["product"].pop("price", None)
+        return ret
 
 class OrderSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for an order."""
