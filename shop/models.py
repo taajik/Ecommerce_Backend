@@ -258,12 +258,14 @@ class Order(BaseModel):
 
     PENDING = "PENDING"
     PAID = "PAID"
+    PROCESSING = "processing"
     SHIPPED = "SHIPPED"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     STATUS_CHOICES = {
         PENDING: "Pending",
         PAID: "Paid",
+        PROCESSING: "processing",
         SHIPPED: "Shipped",
         DELIVERED: "Delivered",
         CANCELLED: "Cancelled",

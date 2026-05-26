@@ -38,5 +38,8 @@ urlpatterns = [
         path("order/<int:pk>/",
              views.OrderDetailAPI.as_view(),
              name="order-detail"),
+        path("order/<int:pk>/cancel/",
+             views.OrderCancelAPI.as_view(),
+             name="order-cancel"),
     ]), name="user")
 ]

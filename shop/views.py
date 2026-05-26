@@ -322,3 +322,29 @@ class OrderDetailAPI(generics.RetrieveAPIView):
             )
         )
         return queryset
+
+
+class OrderCancelAPI(APIView):
+    """View to cancel an order."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        """Cancel an order if it's not shipped."""
+        order = get_object_or_404(Order, id=pk, user=request.user)
+
+        if order.status not in (Order.PENDING, Order.PAID, Order.PROCESSING):
+            return Response(
+                {
+                    "error": f"Order cannot be cancelled. "
+                    f"Current status: {order.get_status_display()}."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order.status = Order.CANCELLED
+        order.save()
+        return Response(
+            OrderDetailSerializer(order, context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
