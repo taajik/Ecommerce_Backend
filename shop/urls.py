@@ -30,7 +30,10 @@ urlpatterns = [
              views.CartAPI.as_view(),
              name="cart"),
         path("cart/item/<int:product_pk>/",
-             views.CartItemView.as_view(),
+             views.CartItemAPI.as_view(),
              name="cart-item"),
+        path("order/<int:pk>/",
+             views.OrderDetailAPI.as_view(),
+             name="order-detail"),
     ]), name="user")
 ]

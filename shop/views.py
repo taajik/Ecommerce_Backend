@@ -22,6 +22,8 @@ from .models import (
     Address,
     Cart,
     CartItem,
+    Order,
+    OrderItem,
 )
 from .serializers import (
     ProductDetailSerializer,
@@ -32,6 +34,7 @@ from .serializers import (
     AddressSerializer,
     CartSerializer,
     CartItemSerializer,
+    OrderSerializer,
 )
 
 
@@ -41,6 +44,8 @@ class ProductPagination(PageNumberPagination):
 
 class CommentPagination(PageNumberPagination):
     page_size = 15
+
+
 
 
 class ProductDetailAPI(generics.RetrieveAPIView):
@@ -76,6 +81,8 @@ class CategoryProductListAPI(generics.ListAPIView):
         queryset = Product.objects.filter(categories=category)
         queryset = queryset.select_related("primary_image")
         return queryset
+
+
 
 
 class ProductCommentAPI(generics.ListCreateAPIView):
@@ -115,6 +122,8 @@ class ProductCommentAPI(generics.ListCreateAPIView):
         )
 
 
+
+
 class AddressAPI(generics.ListCreateAPIView):
     """View to create and list addresses for a user."""
 
@@ -139,6 +148,8 @@ class AddressDetailAPI(generics.RetrieveUpdateDestroyAPIView):
         return Address.objects.filter(user=self.request.user)
 
 
+
+
 class CartAPI(generics.RetrieveAPIView):
     """View to list products in a user's cart."""
 
@@ -158,7 +169,7 @@ class CartAPI(generics.RetrieveAPIView):
         return cart
 
 
-class CartItemView(APIView):
+class CartItemAPI(APIView):
     """View to add, update, or delete an item in the cart."""
 
     permission_classes = [IsAuthenticated]
@@ -202,7 +213,7 @@ class CartItemView(APIView):
         """Update item quantity in cart."""
         return self._update_quantity(request, product_pk)
 
-    def _update_quantity(self, request, product_pk=None):
+    def _update_quantity(self, request, product_pk):
         cart = self.get_cart()
         cart_item = get_object_or_404(CartItem, cart=cart,
                                       product_id=product_pk)
@@ -219,3 +230,22 @@ class CartItemView(APIView):
                                       product_id=product_pk)
         cart_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+class OrderDetailAPI(generics.RetrieveAPIView):
+    """View for each order's details."""
+
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        queryset = Order.objects.filter(user=self.request.user)
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                "items",
+                queryset=OrderItem.objects.select_related("product"),
+            )
+        )
+        return queryset

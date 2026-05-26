@@ -13,6 +13,8 @@ from .models import (
     Address,
     Cart,
     CartItem,
+    Order,
+    OrderItem,
 )
 
 
@@ -97,6 +99,8 @@ class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
         return url
 
 
+
+
 class CommentListSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for listing product comments."""
 
@@ -127,6 +131,8 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         return value
 
 
+
+
 class AddressSerializer(serializers.ModelSerializer):
     """Serializer for user addresses."""
 
@@ -147,6 +153,8 @@ class AddressSerializer(serializers.ModelSerializer):
         if len(value) < 4:
             raise serializers.ValidationError("Postal code is too short.")
         return value
+
+
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -171,6 +179,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         else:
             return obj.product_id
 
+
 class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for user's cart."""
 
@@ -179,3 +188,34 @@ class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ["items"]
+
+
+
+
+class OrderItemSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for items of the order-product relation."""
+
+    product = ProductListSerializer(read_only=True)
+    quantity = serializers.IntegerField(max_value=999, min_value=1, default=1)
+
+    class Meta:
+        model = OrderItem
+        fields = ["product", "price", "quantity"]
+
+
+class OrderSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for an order."""
+
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "items",
+            "total_price",
+            "shipping_address",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
