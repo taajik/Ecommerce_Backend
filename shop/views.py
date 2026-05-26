@@ -1,4 +1,6 @@
 
+from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Prefetch
@@ -35,6 +37,7 @@ from .serializers import (
     CartSerializer,
     CartItemSerializer,
     OrderSerializer,
+    CheckOutSerializer,
 )
 
 
@@ -128,7 +131,7 @@ class AddressAPI(generics.ListCreateAPIView):
     """View to create and list addresses for a user."""
 
     serializer_class = AddressSerializer
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [IsAuthenticated]
     pagination_class = None
 
     def get_queryset(self):
@@ -232,6 +235,57 @@ class CartItemAPI(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+
+
+class OrderAPI(APIView):
+    """View to create orders for a user."""
+
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        """Check out all products in the cart as an order."""
+        serializer = CheckOutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        address_pk = serializer.validated_data.get("address_pk")
+        address = get_object_or_404(Address, id=address_pk, user=request.user)
+        cart = get_object_or_404(Cart.objects.prefetch_related(
+            Prefetch(
+                "items",
+                queryset=CartItem.objects.select_related("product"),
+            )
+        ), user=request.user)
+        cart_items = list(cart.items.all())
+
+        if not cart_items:
+            return Response(
+                {"error": "Cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order = Order.objects.create(
+            user=request.user,
+            shipping_address=address.get_full_address(),
+            status=Order.PENDING
+        )
+
+        total_price = Decimal("0.00")
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                price=item.product.price,
+                quantity=item.quantity,
+            )
+            total_price += item.product.price * item.quantity
+        order.total_price = total_price
+        order.save()
+        CartItem.objects.filter(cart=cart).delete()
+
+        return Response(
+            OrderSerializer(order, context={"request": request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
 
 class OrderDetailAPI(generics.RetrieveAPIView):

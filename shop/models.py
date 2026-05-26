@@ -280,7 +280,7 @@ class Order(BaseModel):
         blank=True,
         related_name="orders",
     )
-    total_price = models.DecimalField(  # TODO: should be calculated automatically
+    total_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0,

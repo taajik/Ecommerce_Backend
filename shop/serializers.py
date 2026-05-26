@@ -192,6 +192,12 @@ class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
 
 
 
+class CheckOutSerializer(serializers.Serializer):
+    """Serializer for specifying the address to use for the order."""
+
+    address_pk = serializers.IntegerField()
+
+
 class OrderItemSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for items of the order-product relation."""
 
