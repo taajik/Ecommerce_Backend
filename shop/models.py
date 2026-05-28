@@ -197,7 +197,7 @@ class CartItem(models.Model):
         ]
 
     def __str__(self):
-        return f"Cart Item (product {self.product_id})"
+        return f"Product {self.product_id} in Cart {self.cart_id}"
 
 
 class Cart(models.Model):
@@ -251,7 +251,7 @@ class OrderItem(models.Model):
         ]
 
     def __str__(self):
-        return f"Order item (product {self.product_id})"
+        return f"Product {self.product_id} in Order {self.order_id}"
 
 
 class Order(BaseModel):

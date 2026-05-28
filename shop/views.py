@@ -275,35 +275,38 @@ class OrderAPI(APIView):
                 queryset=(
                     CartItem.objects
                     .select_related("product")
-                    .select_for_update(of=["self"])
+                    .select_for_update(no_key=True)
                 ),
             )
         )
         cart = get_object_or_404(cart_queryset, user=request.user)
         cart_items = list(cart.items.all())
-
         if not cart_items:
-            return Response(
-                {"error": "Cart is empty."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError("Cart is empty.")
 
         order = Order.objects.create(
             user=request.user,
             shipping_address=address.get_full_address(),
             status=Order.PENDING
         )
-
-        total_price = Decimal("0.00")
         order_items = []
+        total_price = Decimal("0.00")
+
         for item in cart_items:
+            product = item.product
+            if product.stock < item.quantity:
+                raise ValidationError(f"Not enough stock for {product.title}")
+            product.stock = F("stock") - item.quantity
+            product.save()
+
             order_items.append(OrderItem(
                 order=order,
-                product=item.product,
-                price=item.product.price,
+                product=product,
+                price=product.price,
                 quantity=item.quantity,
             ))
-            total_price += item.product.price * item.quantity
+            total_price += product.price * item.quantity
+
         OrderItem.objects.bulk_create(order_items)
         order.total_price = total_price
         order.save()
@@ -351,7 +354,15 @@ class OrderCancelAPI(APIView):
             )
 
         order.cancel()
+        self._restore_inventory(order)
         return Response(
             OrderDetailSerializer(order, context={"request": request}).data,
             status=status.HTTP_200_OK
         )
+
+    def _restore_inventory(self, order):
+        """Restore product inventory when order is cancelled."""
+        for item in order.items.all():
+            if item.product:
+                item.product.stock += item.quantity
+                item.product.save()
