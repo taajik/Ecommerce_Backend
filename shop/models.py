@@ -4,6 +4,7 @@ import os
 from django.db import models
 from django.conf import settings
 from django.core.validators import MaxLengthValidator
+from django.core.exceptions import ValidationError
 from PIL import Image as PILImage
 
 from common.models import BaseModel
@@ -294,6 +295,15 @@ class Order(BaseModel):
         choices=STATUS_CHOICES,
         default=PENDING,
     )
+
+    def can_be_cancelled(self):
+        return self.status in (Order.PENDING, Order.PAID, Order.PROCESSING)
+
+    def cancel(self):
+        if not self.can_be_cancelled():
+            raise ValidationError("Order cannot be cancelled.")
+        self.status = self.CANCELLED
+        self.save()
 
     def __str__(self):
         creation_time = self.created_at.strftime("%Y-%m-%d %H:%M:%S")

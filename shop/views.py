@@ -8,7 +8,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.serializers import ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -268,12 +268,18 @@ class OrderAPI(APIView):
         serializer.is_valid(raise_exception=True)
         address_pk = serializer.validated_data.get("address_pk")
         address = get_object_or_404(Address, id=address_pk, user=request.user)
-        cart = get_object_or_404(Cart.objects.prefetch_related(
+
+        cart_queryset = Cart.objects.select_for_update().prefetch_related(
             Prefetch(
                 "items",
-                queryset=CartItem.objects.select_related("product"),
+                queryset=(
+                    CartItem.objects
+                    .select_related("product")
+                    .select_for_update(of=["self"])
+                ),
             )
-        ), user=request.user)
+        )
+        cart = get_object_or_404(cart_queryset, user=request.user)
         cart_items = list(cart.items.all())
 
         if not cart_items:
@@ -289,14 +295,16 @@ class OrderAPI(APIView):
         )
 
         total_price = Decimal("0.00")
+        order_items = []
         for item in cart_items:
-            OrderItem.objects.create(
+            order_items.append(OrderItem(
                 order=order,
                 product=item.product,
                 price=item.product.price,
                 quantity=item.quantity,
-            )
+            ))
             total_price += item.product.price * item.quantity
+        OrderItem.objects.bulk_create(order_items)
         order.total_price = total_price
         order.save()
         CartItem.objects.filter(cart=cart).delete()
@@ -329,21 +337,20 @@ class OrderCancelAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, pk=None):
         """Cancel an order if it's not shipped."""
         order = get_object_or_404(Order, id=pk, user=request.user)
 
-        if order.status not in (Order.PENDING, Order.PAID, Order.PROCESSING):
-            return Response(
-                {
-                    "error": f"Order cannot be cancelled. "
-                    f"Current status: {order.get_status_display()}."
-                },
-                status=status.HTTP_400_BAD_REQUEST
+        if order.status == Order.CANCELLED:
+            raise ValidationError("Order is already cancelled.")
+        if not order.can_be_cancelled():
+            raise ValidationError(
+                f"Order cannot be cancelled. "
+                f"Current status: {order.get_status_display()}."
             )
 
-        order.status = Order.CANCELLED
-        order.save()
+        order.cancel()
         return Response(
             OrderDetailSerializer(order, context={"request": request}).data,
             status=status.HTTP_200_OK
