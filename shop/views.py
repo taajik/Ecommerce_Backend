@@ -26,6 +26,7 @@ from .models import (
     CartItem,
     Order,
     OrderItem,
+    Payment,
 )
 from .serializers import (
     ProductDetailSerializer,
@@ -39,6 +40,7 @@ from .serializers import (
     OrderDetailSerializer,
     OrderListSerializer,
     CheckOutSerializer,
+    PaymentCreateSerializer,
 )
 
 
@@ -191,10 +193,10 @@ class CartItemAPI(APIView):
         """Add item to cart."""
         serializer = CartItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        quantity = serializer.validated_data.get("quantity", 1)
 
         cart = self.get_cart()
         product = get_object_or_404(Product, id=product_pk)
-        quantity = serializer.validated_data.get("quantity", 1)
         if product.stock < quantity:
             raise ValidationError("Insufficient stock.")
 
@@ -284,7 +286,7 @@ class OrderAPI(APIView):
         if not cart_items:
             raise ValidationError("Cart is empty.")
 
-        order = Order.objects.create(
+        order = Order(
             user=request.user,
             shipping_address=address.get_full_address(),
             status=Order.PENDING
@@ -307,9 +309,9 @@ class OrderAPI(APIView):
             ))
             total_price += product.price * item.quantity
 
-        OrderItem.objects.bulk_create(order_items)
         order.total_price = total_price
         order.save()
+        OrderItem.objects.bulk_create(order_items)
         CartItem.objects.filter(cart=cart).delete()
 
         return Response(
@@ -326,7 +328,7 @@ class OrderDetailAPI(generics.RetrieveAPIView):
 
     def get_queryset(self):
         queryset = Order.objects.filter(user=self.request.user)
-        queryset = queryset.prefetch_related(
+        queryset = queryset.select_related("payment").prefetch_related(
             Prefetch(
                 "items",
                 queryset=OrderItem.objects.select_related("product"),
@@ -366,3 +368,50 @@ class OrderCancelAPI(APIView):
             if item.product:
                 item.product.stock += item.quantity
                 item.product.save()
+
+
+class PaymentAPI(APIView):
+    """View for initiating payment for an order."""
+
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, pk=None):
+        """Create a payment for the order."""
+        serializer = PaymentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        provider = serializer.validated_data.get("provider")
+
+        order_pk = self.kwargs.get("pk")
+        order = get_object_or_404(
+            Order.objects.select_for_update(),
+            pk=order_pk,
+            user=request.user,
+        )
+        payment, created = Payment.objects.get_or_create(order=order)
+
+        if not created:
+            if payment.status == Payment.PAID:
+                raise ValidationError("Order is already paid.")
+            if not payment.can_retry():
+                raise ValidationError("Payment can't be re-initiated.")
+
+        payment.provider = provider
+        payment.amount = order.total_price
+        payment.status = Payment.PENDING
+
+        # fake gateway call
+        gateway_success = True
+
+        if gateway_success:
+            payment.status = Payment.PAID
+            order.status = Order.PAID
+            order.save()
+        else:
+            payment.status = Payment.FAILED
+        payment.save()
+
+        return Response({
+            "payment_id": payment.id,
+            "status": payment.status
+        })

@@ -15,6 +15,7 @@ from .models import (
     CartItem,
     Order,
     OrderItem,
+    Payment,
 )
 
 
@@ -192,6 +193,30 @@ class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
 
 
 
+class PaymentDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
+    """Serializer for a payment."""
+
+    class Meta:
+        model = Payment
+        fields = [
+            "id",
+            "provider",
+            "transaction_id",
+            "amount",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class PaymentCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a payment."""
+
+    class Meta:
+        model = Payment
+        fields = ["provider"]
+
+
 class CheckOutSerializer(serializers.Serializer):
     """Serializer for specifying the address to use for the order."""
 
@@ -218,6 +243,7 @@ class OrderDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for an order."""
 
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = PaymentDetailSerializer(read_only=True)
 
     class Meta:
         model = Order
@@ -227,6 +253,7 @@ class OrderDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "total_price",
             "shipping_address",
             "status",
+            "payment",
             "created_at",
             "updated_at",
         ]

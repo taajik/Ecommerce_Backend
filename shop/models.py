@@ -1,5 +1,6 @@
 
 import os
+import uuid
 
 from django.db import models
 from django.conf import settings
@@ -258,15 +259,15 @@ class Order(BaseModel):
     """Represents a finalized purchase made by a user."""
 
     PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
     PAID = "PAID"
-    PROCESSING = "processing"
     SHIPPED = "SHIPPED"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     STATUS_CHOICES = {
         PENDING: "Pending",
+        PROCESSING: "Processing",
         PAID: "Paid",
-        PROCESSING: "processing",
         SHIPPED: "Shipped",
         DELIVERED: "Delivered",
         CANCELLED: "Cancelled",
@@ -331,17 +332,27 @@ class Payment(BaseModel):
     }
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
-    provider = models.CharField(max_length=30)
+    provider = models.CharField(max_length=30, blank=True)
     transaction_id = models.CharField(max_length=255, unique=True, blank=True)
     amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        default=0,
     )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default=PENDING,
     )
+
+    def can_retry(self):
+        return self.status in (self.PENDING, self.FAILED,
+                               self.CANCELLED, self.EXPIRED)
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            self.transaction_id = uuid.uuid4()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Payment {self.transaction_id}"
