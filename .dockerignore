@@ -1,5 +1,9 @@
 # Project
 todo.txt
+postgres/
+nginx/
+assets/
+media/
 
 # Git
 .git
@@ -13,6 +17,7 @@ docker-compose.yml
 
 # Env
 .env
+.env.example
 .venv/
 env/
 venv/

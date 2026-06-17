@@ -15,10 +15,10 @@ DEBUG = False
 STATIC_ROOT = BASE_DIR / 'assets'
 
 
-# Secure cookies (https:// only)
+# Secure cookies (https only)
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 
 
 # Security middleware
@@ -27,4 +27,4 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_SECONDS = 31536000
 
-SECURE_SSL_REDIRECT = True
+# SECURE_SSL_REDIRECT = True

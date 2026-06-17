@@ -7,6 +7,10 @@ services:
     volumes:
       - .:/app
       - shellhistory:/root
+    ports:
+      - "8000:8000"
+
+  nginx: null
 
 volumes:
   shellhistory:

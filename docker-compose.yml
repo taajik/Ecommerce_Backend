@@ -4,14 +4,17 @@ services:
   web:
     build: .
     restart: unless-stopped
-    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+    command: gunicorn --bind 0.0.0.0:8000 --workers 9 --access-logfile - --error-logfile - config.wsgi:application
     env_file:
       - ./.env
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.production
       POSTGRES_PASSWORD: ""
-    ports:
-      - "8000:8000"
+    volumes:
+      - static_volume:/app/assets
+      - media_volume:/app/media
+    expose:
+      - "8000"
     depends_on:
       - db
 
@@ -28,5 +31,23 @@ services:
     expose:
       - "5432"
 
+  nginx:
+    image: nginx:1.30.2-alpine
+    restart: always
+    environment:
+      SERVER_NAMES: ${SERVER_NAMES}
+    volumes:
+      - static_volume:/var/www/ebproj/assets:ro
+      - media_volume:/var/www/ebproj/media:ro
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "80:80"
+    #   - "443:443"
+    depends_on:
+      - web
+
 volumes:
   pg_data:
+  static_volume:
+  media_volume:

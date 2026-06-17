@@ -14,7 +14,9 @@ then
     docker compose -f docker-compose.yml up -d db
     sleep 5
     docker compose run --rm web python manage.py migrate --noinput
+    docker compose -f docker-compose.yml run --rm web python manage.py collectstatic --noinput
     docker compose -f docker-compose.yml up -d web
+    docker compose -f docker-compose.yml up -d nginx
 
 elif [ "$1" = "dev" ] || [ -z "$1" ]
 then
