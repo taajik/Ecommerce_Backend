@@ -44,6 +44,7 @@ services:
     volumes:
       - static_volume:/var/www/ebproj/assets:ro
       - media_volume:/var/www/ebproj/media:ro
+      - ssl_certs:/etc/nginx/certs:ro
       - ./nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
     ports:
       - "80:80"
@@ -55,3 +56,4 @@ volumes:
   pg_data:
   static_volume:
   media_volume:
+  ssl_certs:
