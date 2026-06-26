@@ -1,7 +1,6 @@
 # Project
 todo.txt
 media/
-nginx/certs/
 
 # Env
 .env

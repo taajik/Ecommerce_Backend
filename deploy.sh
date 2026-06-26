@@ -14,11 +14,6 @@ then
 
     docker compose -f docker-compose.yml up -d db
     sleep 5
-
-    printf "\nRunning migrate...\n"
-    docker compose run --rm web python manage.py migrate --noinput
-    printf "\nRunning collectstatic...\n"
-    docker compose -f docker-compose.yml run --rm web python manage.py collectstatic --noinput
     docker compose -f docker-compose.yml up -d web
 
     if [ ! -f ./nginx/certs/self.crt ] || [ ! -f ./nginx/certs/self.key ]; then
