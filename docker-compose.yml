@@ -45,8 +45,9 @@ services:
     volumes:
       - static_volume:/var/www/ebproj/assets:ro
       - media_volume:/var/www/ebproj/media:ro
-      - ssl_certs:/etc/nginx/certs:ro
+      - ssl_certs:/etc/nginx/ssl
       - ./nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/entrypoint.sh:/docker-entrypoint.d/99-generate-certs.sh:ro
     ports:
       - "80:80"
       - "443:443"
