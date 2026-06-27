@@ -1,7 +1,7 @@
 
 services:
   web:
-    entrypoint: []
+    entrypoint: ["/app/entrypoint.dev.sh"]
     command: python manage.py runserver 0.0.0.0:8000
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
@@ -11,7 +11,9 @@ services:
     ports:
       - "8000:8000"
 
-  nginx: null
+  nginx:
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/templates/default.conf.template:ro
 
 volumes:
   shellhistory:

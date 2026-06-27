@@ -1,32 +1,23 @@
 # Ecommerce Backend
 
-Dockerized backend project for an e-commerce store implemented using Django and PostgreSQL.
+Dockerized backend project for an e-commerce store implemented using Django, PostgreSQL and Nginx.
 
 
 ## Set up
 
-Django and PostgreSQL need some environment variables for their configuration.
 
-To set them up, rename the [`.env.example`](/.env.example) file to `.env` and fill it with the right values.
+You need to set up some environment variables for project configuration.
+
+To do so, rename the [`.env.example`](/.env.example) file to `.env` and fill it with the right values.
 
 
 ## Run
 
-After setting up the .env file, use the [deploy.sh](/deploy.sh) script to run the project.
-Depending on the environment:
+Depending on the environment, you can run the project like this:
 ```
 # For production:
-deploy.sh prod
+docker compose up -d
 
 # For Development:
-deploy.sh dev
-```
-And to stop the project:
-```
-deploy.sh down
-```
-
-On linux systems, docker needs to be run with super user privileges:
-```
-sudo ./deploy.sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
