@@ -1,5 +1,6 @@
 # Project
 todo.txt
+README.md
 postgres/
 nginx/
 assets/
@@ -12,6 +13,7 @@ media/
 
 # Docker
 docker-compose.yml
+docker-compose.dev.yml
 .docker
 .dockerignore
 

@@ -3,7 +3,7 @@
 Dockerized backend project for an e-commerce store implemented using Django, PostgreSQL and Nginx.
 
 
-## Set up
+## Setup
 
 
 You need to set up some environment variables for project configuration.
@@ -15,7 +15,7 @@ To do so, rename the [`.env.example`](/.env.example) file to `.env` and fill it 
 
 Depending on the environment, you can run the project like this:
 ```
-# For production:
+# For Production:
 docker compose up -d
 
 # For Development:

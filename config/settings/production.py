@@ -1,5 +1,5 @@
 
-from .development import *
+from .development import *      # noqa
 
 
 ## Necessary settings for a production environment

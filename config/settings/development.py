@@ -1,7 +1,7 @@
 
 import os
 
-from .base import *
+from .base import *     # noqa
 
 
 ## Quick-start development settings - unsuitable for production
@@ -21,9 +21,6 @@ if ALLOWED_HOSTS:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',')]
 else:
     ALLOWED_HOSTS = []
-
-
-TIME_ZONE = get_env_var('DJANGO_TIME_ZONE', 'UTC')
 
 
 DATABASES = {

@@ -28,6 +28,16 @@ def get_env_var(ev, default=None):
 
 # Application definition
 
+LOCAL_APPS = [
+    'accounts.apps.AccountsConfig',
+    'shop.apps.ShopConfig',
+]
+
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'rest_framework_simplejwt',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -35,11 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'accounts.apps.AccountsConfig',
-    'shop.apps.ShopConfig',
+    *THIRD_PARTY_APPS,
+    *LOCAL_APPS,
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
