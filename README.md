@@ -30,12 +30,14 @@ After you run the project for production, run this command to get a SSL certific
 (replace the -d and --email values with your domain name and email)
 ```
 docker compose run --rm certbot certonly --webroot --webroot-path=/var/www/ebproj/certbot -d EXAMPLE.COM -d www.EXAMPLE.COM --email YOU@GMAIL.COM --agree-tos --no-eff-email
+```
 
-# and if successful, restart nginx:
+And if successful, restart nginx:
+```
 docker compose restart nginx
 ```
 
-And set up a cron job for certificate renewal:
+Also, set up a cron job for certificate renewal:
 ```
 0 3 * * * docker compose run --rm certbot renew -q && docker compose exec nginx nginx -s reload
 ```
