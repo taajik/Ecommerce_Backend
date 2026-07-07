@@ -1,14 +1,18 @@
+
 # Ecommerce Backend
 
-Dockerized backend project for an e-commerce store implemented using Django, PostgreSQL and Nginx.
+Dockerized backend API for an e-commerce store, implemented using Django, PostgreSQL and Nginx.
+
+> A live implementation of the project is available at [https://ebproj.dpdns.org](https://ebproj.dpdns.org/).
 
 
 ## Setup
 
 
 You need to set up some environment variables for project configuration.
-
 To do so, rename the [`.env.example`](/.env.example) file to `.env` and fill it with the right values.
+
+> Also see [server_hardening.md](/server_hardening.md) for a few steps to secure the production server.
 
 
 ## Run
