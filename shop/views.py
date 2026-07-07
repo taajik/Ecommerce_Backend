@@ -15,6 +15,7 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
 )
 from rest_framework.pagination import PageNumberPagination
+from drf_spectacular.utils import extend_schema
 
 from common.permissions import IsOwner, ReadOnly
 from .models import (
@@ -182,6 +183,7 @@ class CartAPI(generics.RetrieveAPIView):
 class CartItemAPI(APIView):
     """View to add, update, or delete an item in the cart."""
 
+    serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
 
     def get_cart(self):
@@ -249,6 +251,7 @@ class OrderAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=OrderListSerializer(many=True))
     def get(self, request):
         """List all orders of a user."""
         queryset = Order.objects.filter(
@@ -263,6 +266,10 @@ class OrderAPI(APIView):
                                          context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        request=CheckOutSerializer,
+        responses=OrderDetailSerializer
+    )
     @transaction.atomic
     def post(self, request):
         """Check out all products in the cart as an order."""
@@ -340,6 +347,7 @@ class OrderDetailAPI(generics.RetrieveAPIView):
 class OrderCancelAPI(APIView):
     """View to cancel an order."""
 
+    serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
@@ -373,6 +381,7 @@ class OrderCancelAPI(APIView):
 class PaymentAPI(APIView):
     """View for initiating payment for an order."""
 
+    serializer_class = PaymentCreateSerializer
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic

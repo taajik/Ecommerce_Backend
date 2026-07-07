@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from drf_spectacular.utils import extend_schema_field
 
 from common.serializer_mixins import ReadOnlyMixin
 from .models import (
@@ -51,7 +52,7 @@ class ProductDetailSerializer(ReadOnlyMixin, serializers.ModelSerializer):
             "comments",
         ]
 
-    def get_categories_list(self, obj):
+    def get_categories_list(self, obj) -> list:
         return getattr(obj, "categories_list", [])
 
 
@@ -83,7 +84,7 @@ class CategorySerializer(ReadOnlyMixin, serializers.ModelSerializer):
         model = Category
         fields = ["id", "slug", "title", "products"]
 
-    def get_products(self, obj):
+    def get_products(self, obj) -> str | None:
         request = self.context.get("request")
         if not request:
             return None
@@ -168,6 +169,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ["product", "quantity"]
 
+    @extend_schema_field(ProductListSerializer)
     def get_product(self, obj):
         # Simple representation without request in context,
         # doesn't need full nested object; just the id.

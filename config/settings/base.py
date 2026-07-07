@@ -157,10 +157,10 @@ REST_FRAMEWORK = {
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "API Index",
-    "DESCRIPTION": "Backend API",
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
+    'TITLE': 'API Index',
+    'DESCRIPTION': 'Backend API of an E-commerce store',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 
