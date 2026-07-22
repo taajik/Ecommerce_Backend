@@ -183,6 +183,13 @@ class CartItemSerializer(serializers.ModelSerializer):
             return obj.product_id
 
 
+class CartItemCreateSerializer(serializers.Serializer):
+    """Serializer for adding a product to the cart."""
+
+    product_pk = serializers.IntegerField()
+    quantity = serializers.IntegerField(max_value=999, min_value=1, default=1)
+
+
 class CartSerializer(ReadOnlyMixin, serializers.ModelSerializer):
     """Serializer for user's cart."""
 

@@ -38,6 +38,7 @@ from .serializers import (
     AddressSerializer,
     CartSerializer,
     CartItemSerializer,
+    CartItemCreateSerializer,
     OrderDetailSerializer,
     OrderListSerializer,
     CheckOutSerializer,
@@ -180,21 +181,30 @@ class CartAPI(generics.RetrieveAPIView):
         return cart
 
 
-class CartItemAPI(APIView):
-    """View to add, update, or delete an item in the cart."""
-
-    serializer_class = CartItemSerializer
-    permission_classes = [IsAuthenticated]
+class CartMixin:
+    """Shared helpers for cart-related views."""
 
     def get_cart(self):
         cart, created = Cart.objects.get_or_create(user=self.request.user)
         return cart
 
+
+class CartItemCreateAPI(CartMixin, APIView):
+    """View to add a product to the cart."""
+
+    serializer_class = CartItemCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=CartItemCreateSerializer,
+        responses=CartItemSerializer,
+    )
     @transaction.atomic
-    def post(self, request, product_pk=None):
+    def post(self, request):
         """Add item to cart."""
-        serializer = CartItemSerializer(data=request.data)
+        serializer = CartItemCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        product_pk = serializer.validated_data["product_pk"]
         quantity = serializer.validated_data.get("quantity", 1)
 
         cart = self.get_cart()
@@ -216,6 +226,13 @@ class CartItemAPI(APIView):
             status=status.HTTP_201_CREATED if created
             else status.HTTP_200_OK
         )
+
+
+class CartItemAPI(CartMixin, APIView):
+    """View to update or delete an item in the cart."""
+
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def put(self, request, product_pk=None):
         """Update item quantity in cart."""
@@ -391,10 +408,9 @@ class PaymentAPI(APIView):
         serializer.is_valid(raise_exception=True)
         provider = serializer.validated_data.get("provider")
 
-        order_pk = self.kwargs.get("pk")
         order = get_object_or_404(
             Order.objects.select_for_update(),
-            pk=order_pk,
+            pk=pk,
             user=request.user,
         )
         payment, created = Payment.objects.get_or_create(order=order)
