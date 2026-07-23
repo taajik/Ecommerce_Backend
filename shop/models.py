@@ -371,6 +371,25 @@ class Address(BaseModel):
     city = models.CharField(max_length=30)
     address_line = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=30)
+    is_default = models.BooleanField(default=False, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default=True),
+                name="unique_default_address_per_user",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not Address.objects.filter(user=self.user).exists():
+            self.is_default = True
+        if self.is_default:
+            Address.objects.filter(user=self.user, is_default=True).exclude(
+                pk=self.pk
+            ).update(is_default=False)
+        super().save(*args, **kwargs)
 
     def get_full_address(self):
         address_list = [self.country, self.state, self.city, self.address_line]
